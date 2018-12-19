@@ -18,6 +18,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
 public class BasicIndexer {
+  final static TupleTag<String> pom = new TupleTag<String>(){};
+  final static TupleTag<String> gradle = new TupleTag<String>(){};
 
   public interface BasicIndexerOptions extends PipelineOptions {
     @Description("Input path")
@@ -60,7 +62,7 @@ public class BasicIndexer {
 
   private static class ReadRepositoryFn extends DoFn<FileIO.ReadableFile, String> {
     @ProcessElement
-    public void processElement(@Element FileIO.ReadableFile file, OutputReceiver<String> receiver) {
+    public void processElement(@Element FileIO.ReadableFile file, MultiOutputReceiver receiver) {
       String repositoryID = file.getMetadata().resourceId().getFilename();
 
       try (ReadableByteChannel byteChannel = file.open();
@@ -73,7 +75,10 @@ public class BasicIndexer {
           String fileName = words[words.length-1];
           if (fileName != null) {
             if (fileName.equalsIgnoreCase("pom.xml")) {
-              receiver.output(repositoryID);
+              receiver.get(pom).output(repositoryID);
+            }
+            if (fileName.equalsIgnoreCase("build.gradle")) {
+              receiver.get(gradle).output(repositoryID);
             }
           }
         }
@@ -88,9 +93,6 @@ public class BasicIndexer {
 
     String input = options.getInput();
     String output = options.getOutput();
-
-    final TupleTag<String> pom = new TupleTag<String>(){};
-    final TupleTag<String> gradle = new TupleTag<String>(){};
 
     p.apply(FileIO.match().filepattern(input))
             .apply(FileIO.readMatches())
@@ -109,19 +111,19 @@ public class BasicIndexer {
 
     String input = options.getInput();
     String output = options.getOutput();
-
-    final TupleTag<String> pom = new TupleTag<String>(){};
-    final TupleTag<String> gradle = new TupleTag<String>(){};
-
+    
     PCollectionTuple repoLists = p.apply(FileIO.match().filepattern(input))
             .apply(FileIO.readMatches())
             .apply("ReadFile", ParDo.of(new ReadRepositoryFn()).withOutputTags(pom, TupleTagList.of(gradle)));
-    
+
     PCollection<String> pomList = repoLists.get(pom);
     PCollection<String> gradleList = repoLists.get(gradle);
 
-    pomList.apply(Distinct.create()).apply(TextIO.write().to(output+"-pom.txt"));
-    gradleList.apply(Distinct.create()).apply(TextIO.write().to(output+"-gradle.txt"));
+    pomList.apply("DistinctPOM",Distinct.create())
+           .apply("WritePOM",TextIO.write().to(output+"-pom.txt"));
+
+    gradleList.apply("DistinctGradle",Distinct.create())
+              .apply("WriteGradle",TextIO.write().to(output+"-gradle.txt"));
 
     p.run().waitUntilFinish();
   }
