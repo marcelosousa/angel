@@ -61,6 +61,7 @@ public class LanguageIndexer {
     String output = options.getOutput();
     p.apply("ReadInput", TextIO.read().from(input))
       .apply("CountLanguages", new CountLanguages())
+      .apply("FilterSmall", Filter.by(k -> k.getValue() > 4))
       .apply("FormatOutput", MapElements.into(TypeDescriptors.strings())
       .via(item -> item.getKey() + ": " + item.getValue()))
       .apply(TextIO.write().to(output));
