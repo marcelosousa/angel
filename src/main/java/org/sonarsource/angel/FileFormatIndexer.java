@@ -11,9 +11,9 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TypeDescriptors;
 
-public class LanguageIndexer {
+public class FileFormatIndexer {
 
-  public interface LanguageIndexerOptions extends PipelineOptions {
+  public interface FileFormatIndexerOptions extends PipelineOptions {
     @Description("Input path")
     @Required
     String getInput();
@@ -41,7 +41,7 @@ public class LanguageIndexer {
     }
   }
 
-  public static class CountLanguages extends
+  public static class CountFileFormat extends
           PTransform<PCollection<String>, PCollection<KV<String, Long>>> {
 
     @Override
@@ -54,13 +54,13 @@ public class LanguageIndexer {
       return languageCount;
     }
   }
-  static void runJob(LanguageIndexerOptions options) {
+  static void runJob(FileFormatIndexerOptions options) {
     Pipeline p = Pipeline.create(options);
 
     String input = options.getInput();
     String output = options.getOutput();
     p.apply("ReadInput", TextIO.read().from(input))
-      .apply("CountLanguages", new CountLanguages())
+      .apply("CountFileFormat", new CountFileFormat())
       .apply("FilterSmall", Filter.by(k -> k.getValue() > 4))
       .apply("FormatOutput", MapElements.into(TypeDescriptors.strings())
       .via(item -> item.getKey() + ": " + item.getValue()))
@@ -70,10 +70,10 @@ public class LanguageIndexer {
   }
 
   public static void main(String[] args) {
-    LanguageIndexerOptions options =
+    FileFormatIndexerOptions options =
             PipelineOptionsFactory.fromArgs(args)
               .withValidation()
-              .as(LanguageIndexerOptions.class);
+              .as(FileFormatIndexerOptions.class);
 
     runJob(options);
   }
