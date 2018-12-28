@@ -10,6 +10,9 @@ public class LogMessage {
   private int entryPointCount;
   private int issueCount;
 
+  @SuppressWarnings("unused")
+  public LogMessage() {}
+
   public LogMessage(String projectName, String ruleId, int entryPointCount, int issueCount) {
     this.projectName = projectName;
     this.ruleId = ruleId;

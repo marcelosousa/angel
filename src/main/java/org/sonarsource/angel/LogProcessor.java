@@ -13,6 +13,8 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
 import com.google.api.services.bigquery.model.TableRow;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,6 +28,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LogProcessor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LogProcessor.class);
+
   public static class EmitLogMessage extends DoFn<FileIO.ReadableFile, LogMessage> {
     @ProcessElement
     public void processElement(@Element FileIO.ReadableFile file, OutputReceiver<LogMessage> receiver) {
@@ -34,6 +39,8 @@ public class LogProcessor {
       int entryPointCount = 0;
       int issueCount = 0;
       boolean isParsingRule = false;
+
+      LOG.info("Processing elements");
 
       try (ReadableByteChannel byteChannel = file.open();
            InputStream stream = Channels.newInputStream(byteChannel);
@@ -47,12 +54,14 @@ public class LogProcessor {
               ruleId = m.group("ruleId");
               entryPointCount = Integer.valueOf(m.group("entryPoints"));
               isParsingRule = true;
+              LOG.info("Found rule");
             }
           } else {
             Pattern p = Pattern.compile(".*has issues");
             Matcher m = p.matcher(line);
             if (m.find()) {
               issueCount = 1;
+              LOG.info("Sending to output");
               receiver.output(new LogMessage(projectName, ruleId, entryPointCount, issueCount));
               ruleId = "";
               entryPointCount = 0;
