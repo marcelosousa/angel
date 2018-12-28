@@ -2,13 +2,14 @@ package org.sonarsource.angel;
 
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
+import org.apache.avro.reflect.Nullable;
 
 @DefaultCoder(AvroCoder.class)
 public class LogMessage {
-  private String projectName;
-  private String ruleId;
-  private int entryPointCount;
-  private int issueCount;
+  @Nullable private String projectName;
+  @Nullable private String ruleId;
+  @Nullable private int entryPointCount;
+  @Nullable private int issueCount;
 
   @SuppressWarnings("unused")
   public LogMessage() {}

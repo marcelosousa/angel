@@ -39,6 +39,7 @@ public class LogProcessor {
       int entryPointCount = 0;
       int issueCount = 0;
       boolean isParsingRule = false;
+      boolean send = false;
 
       LOG.info("Processing elements");
 
@@ -54,19 +55,32 @@ public class LogProcessor {
               ruleId = m.group("ruleId");
               entryPointCount = Integer.valueOf(m.group("entryPoints"));
               isParsingRule = true;
-              LOG.info("Found rule");
+              LOG.info("Rule begin: " + line);
             }
           } else {
             Pattern p = Pattern.compile(".*has issues");
             Matcher m = p.matcher(line);
             if (m.find()) {
+              LOG.info("Found rule issues: " + line);
               issueCount = 1;
-              LOG.info("Sending to output");
-              receiver.output(new LogMessage(projectName, ruleId, entryPointCount, issueCount));
               ruleId = "";
-              entryPointCount = 0;
+            }
+
+            p = Pattern.compile("\\[INFO] rule:.*done");
+            m = p.matcher(line);
+            if (m.find()) {
+              LOG.info("Rule done: " + line);
+              send = true;
               isParsingRule = false;
             }
+          }
+
+          if (send) {
+            LOG.info("Sending to output");
+            receiver.output(new LogMessage(projectName, ruleId, entryPointCount, issueCount));
+            ruleId = "";
+            entryPointCount = 0;
+            send = false;
           }
         }
       } catch (IOException ex) {
