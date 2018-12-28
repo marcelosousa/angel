@@ -58,12 +58,11 @@ public class LogProcessor {
               LOG.info("Rule begin: " + line);
             }
           } else {
-            Pattern p = Pattern.compile(".*has issues");
+            Pattern p = Pattern.compile("\\[INFO] rule: (?<ruleId>\\w*), issues: (?<issues>\\d*)");
             Matcher m = p.matcher(line);
             if (m.find()) {
               LOG.info("Found rule issues: " + line);
-              issueCount = 1;
-              ruleId = "";
+              issueCount = Integer.valueOf(m.group("issues"));
             }
 
             p = Pattern.compile("\\[INFO] rule:.*done");
@@ -80,6 +79,7 @@ public class LogProcessor {
             receiver.output(new LogMessage(projectName, ruleId, entryPointCount, issueCount));
             ruleId = "";
             entryPointCount = 0;
+            issueCount = 0;
             send = false;
           }
         }
