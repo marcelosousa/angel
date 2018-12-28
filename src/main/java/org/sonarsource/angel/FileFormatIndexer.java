@@ -60,7 +60,7 @@ public class FileFormatIndexer {
     String output = options.getOutput();
     p.apply("ReadInput", TextIO.read().from(input))
       .apply("CountFileFormat", new CountFileFormat())
-      .apply("FilterSmall", Filter.by(k -> k.getValue() > 4))
+      .apply("FilterSmall", Filter.by(k -> k.getValue() > 999))
       .apply("FormatOutput", MapElements.into(TypeDescriptors.strings())
       .via(item -> item.getKey() + ": " + item.getValue()))
       .apply(TextIO.write().to(output));

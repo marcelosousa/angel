@@ -97,6 +97,8 @@ public class LogProcessor {
         .set("ruleId", msg.getRuleId())
         .set("entryPointCount", msg.getEntryPointCount())
         .set("issueCount", msg.getIssueCount());
+
+      receiver.output(row);
     }
   }
 
