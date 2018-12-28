@@ -105,5 +105,11 @@
             <!-- When loaded at runtime this will wire up slf4j to the JUL backend -->
             <scope>runtime</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.cloud.dataflow</groupId>
+            <artifactId>google-cloud-dataflow-java-sdk-all</artifactId>
+            <version>LATEST</version>
+        </dependency>
     </dependencies>
 </project>

@@ -12,7 +12,6 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TypeDescriptors;
 
 public class FileFormatIndexer {
-
   public interface FileFormatIndexerOptions extends PipelineOptions {
     @Description("Input path")
     @Required
