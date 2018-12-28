@@ -1,5 +1,7 @@
 package org.sonarsource.angel;
 
+import com.google.api.services.bigquery.model.TableFieldSchema;
+import com.google.api.services.bigquery.model.TableSchema;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
@@ -18,6 +20,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,7 +38,6 @@ public class LogProcessor {
       try (ReadableByteChannel byteChannel = file.open();
            InputStream stream = Channels.newInputStream(byteChannel);
            BufferedReader br = new BufferedReader(new InputStreamReader(stream))) {
-
         String line;
         while ((line = br.readLine()) != null) {
           if (!isParsingRule) {
@@ -99,9 +102,16 @@ public class LogProcessor {
     PCollection<TableRow> msgAsTableRows = logMessages
             .apply("MessageToRow", ParDo.of(new EmitTableRow()));
 
-    // [START allLogsToBigQuery]
+    List<TableFieldSchema> fields = new ArrayList<>();
+    fields.add(new TableFieldSchema().setName("projectName").setType("STRING"));
+    fields.add(new TableFieldSchema().setName("ruleId").setType("STRING"));
+    fields.add(new TableFieldSchema().setName("entryPointCount").setType("INTEGER"));
+    fields.add(new TableFieldSchema().setName("issueCount").setType("INTEGER"));
+    TableSchema schema = new TableSchema().setFields(fields);
+
     msgAsTableRows.apply("writeToBigQuery",BigQueryIO.writeTableRows()
             .to(options.getLogsTableName())
+            .withSchema(schema)
             .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND)
             .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED));
 
