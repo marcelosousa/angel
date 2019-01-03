@@ -1,5 +1,9 @@
 package org.sonarsource.angel;
 
+import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.beam.sdk.coders.DefaultCoder;
+
+@DefaultCoder(AvroCoder.class)
 public class Item {
   private String repositoryName;
   private int fileCount;
